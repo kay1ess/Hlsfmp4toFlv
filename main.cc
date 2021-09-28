@@ -7,9 +7,12 @@
 
 
 #include <iostream>
+#include <cpr/cpr.h>
 
 
 int main()
 {
-    std::cout << "hls2flv\n";
+    cpr::Response res = cpr::Get(cpr::Url{"http://www.baidu.com"});
+    std::cout << "status_code:" << res.status_code << std::endl;
+    std::cout << "text:" << res.text << std::endl;
 }
