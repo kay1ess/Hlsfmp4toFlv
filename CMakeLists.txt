@@ -9,5 +9,8 @@ add_subdirectory(cpr)
 
 include_directories("./cpr/include")
 
-add_executable(hls2flv main.cc)
+aux_source_directory(src src)
+include_directories(src)
+
+add_executable(hls2flv main.cc ${src})
 target_link_libraries(hls2flv PRIVATE cpr)
