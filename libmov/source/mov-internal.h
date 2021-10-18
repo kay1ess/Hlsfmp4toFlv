@@ -211,7 +211,17 @@ struct mov_t
 	uint64_t udta_size;
 };
 
+struct mov_reader_t
+{
+	int flags;
+	int have_read_mfra;
+	
+	struct mov_t mov;
+};
+
 int mov_reader_root(struct mov_t* mov);
+int mov_reader_root2(struct mov_t* mov, int size);
+int mov_index_build(struct mov_track_t* track);
 int mov_reader_box(struct mov_t* mov, const struct mov_box_t* parent);
 int mp4_read_extra(struct mov_t* mov, const struct mov_box_t* parent);
 

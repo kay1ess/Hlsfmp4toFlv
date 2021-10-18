@@ -1,8 +1,74 @@
 #include "mov-internal.h"
+#include "fmp4-reader.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define DIFF(a, b) ((a) > (b) ? ((a) - (b)) : ((b) - (a)))
+
+fmp4_reader_t* fmp4_reader_create(const struct mov_buffer_t* buffer, void* param)
+{
+	fmp4_reader_t* reader;
+	reader = (fmp4_reader_t*)calloc(1, sizeof(*reader));
+	if (NULL == reader)
+		return NULL;
+
+	// ISO/IEC 14496-12:2012(E) 4.3.1 Definition (p17)
+	// Files with no file-type box should be read as if they contained an FTYP box 
+	// with Major_brand='mp41', minor_version=0, and the single compatible brand 'mp41'.
+	reader->mov.ftyp.major_brand = MOV_BRAND_MP41;
+	reader->mov.ftyp.minor_version = 0;
+	reader->mov.ftyp.brands_count = 0;
+	reader->mov.header = 0;
+
+	reader->mov.io.param = param;
+	memcpy(&reader->mov.io.io, buffer, sizeof(reader->mov.io.io));
+	return reader;
+}
+
+void fmp4_reader_destroy(fmp4_reader_t* reader)
+{
+	mov_reader_destroy(reader);
+}
+
+int fmp4_read_init_segment(fmp4_reader_t* reader, struct mov_reader_trackinfo_t *ontrack, void* param, size_t size)
+{
+	int i;
+	uint32_t j;
+	struct mov_t* mov;
+	struct mov_track_t* track;
+    struct mov_sample_entry_t* entry;
+	
+	mov = &reader->mov;
+
+	mov_reader_root2(mov, size);
+
+	for (i = 0; i < mov->track_count; i++)
+	{
+		track = mov->tracks + i;
+		mov_index_build(track);
+	}
+
+	mov_reader_getinfo(reader, ontrack, param);
+	return 0;
+}
+
+int fmp4_read_normal_segment(fmp4_reader_t* reader, void* buffer, size_t bytes, mov_reader_onread onread, void* param, size_t size)
+{
+	struct mov_t* mov;
+	struct mov_sample_t smpl;
+
+	mov = &reader->mov;
+
+	mov_reader_root2(mov, size);
+
+	while (mov_reader_read(reader, buffer, bytes, onread, param) > 0)
+	{
+	};
+
+	return 0;
+}
 
 static int mov_fragment_seek_get_duration(struct mov_t* mov)
 {

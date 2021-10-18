@@ -16,13 +16,7 @@
 
 #define MOV_READER_FLAG_FMP4_FAST 0x01
 
-struct mov_reader_t
-{
-	int flags;
-	int have_read_mfra;
-	
-	struct mov_t mov;
-};
+
 
 #define MOV_READER_FROM_MOV(ptr) ((struct mov_reader_t*)((char*)(ptr)-(ptrdiff_t)(&((struct mov_reader_t*)0)->mov)))
 
@@ -58,7 +52,7 @@ static int mov_read_free(struct mov_t* mov, const struct mov_box_t* box)
 //    return NULL;
 //}
 
-static int mov_index_build(struct mov_track_t* track)
+int mov_index_build(struct mov_track_t* track)
 {
 	void* p;
 	uint32_t i, j;
@@ -195,7 +189,19 @@ int mov_reader_root(struct mov_t* mov)
 #if defined(DEBUG) || defined(_DEBUG)
 	box.level = 0;
 #endif
+	return mov_reader_box(mov, &box);
+}
 
+
+int mov_reader_root2(struct mov_t* mov, int size)
+{
+	struct mov_box_t box;
+
+	box.type = MOV_ROOT;
+	box.size = size;
+#if defined(DEBUG) || defined(_DEBUG)
+	box.level = 0;
+#endif
 	return mov_reader_box(mov, &box);
 }
 
@@ -300,7 +306,10 @@ int mov_reader_box(struct mov_t* mov, const struct mov_box_t* parent)
 		else if (0 == box.size)
 		{
 			if (0 == box.type)
+			{
+				mov_buffer_seek(&mov->io, mov_buffer_tell(&mov->io) - n);
 				return 0; // all done
+			}
 			box.size = UINT64_MAX;
 		}
 
@@ -358,7 +367,6 @@ int mov_reader_box(struct mov_t* mov, const struct mov_box_t* parent)
 				break;
 		}
 	}
-
 	return mov_buffer_error(&mov->io) ? -1 : 0;
 }
 
@@ -377,7 +385,7 @@ static int mov_reader_init(struct mov_reader_t* reader)
 		track = mov->tracks + i;
 		mov_index_build(track);
 		//track->sample_offset = 0; // reset
-		
+
 		// fragment mp4
 		if (0 == track->mdhd.duration && track->sample_count > 0)
 			track->mdhd.duration = track->samples[track->sample_count - 1].dts - track->samples[0].dts;
@@ -452,7 +460,6 @@ static struct mov_track_t* mov_reader_next(struct mov_reader_t* reader)
 			best_dts = dts;
 		}
 	}
-
 	return track;
 }
 
@@ -480,7 +487,6 @@ FMP4_NEXT_FRAGMENT:
 	ptr = onread(param, track->tkhd.track_ID, /*sample->sample_description_index-1,*/ sample->bytes, sample->pts * 1000 / track->mdhd.timescale, sample->dts * 1000 / track->mdhd.timescale, sample->flags);
 	if(!ptr)
 		return ENOMEM;
-
 	mov_buffer_seek(&reader->mov.io, sample->offset);
 	mov_buffer_read(&reader->mov.io, ptr, sample->bytes);
 	if (mov_buffer_error(&reader->mov.io))
@@ -488,7 +494,6 @@ FMP4_NEXT_FRAGMENT:
 		// TODO: user free buffer
 		return mov_buffer_error(&reader->mov.io);
 	}
-
 	track->sample_offset++; //mark as read
 	return 1;
 }
