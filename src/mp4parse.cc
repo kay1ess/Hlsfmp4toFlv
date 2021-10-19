@@ -1,8 +1,8 @@
 /*
  * @Author: kay 
  * @Date: 2021-10-19 17:11:22 
- * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 22:12:04
+ * @Last Modified by: kay1ess
+ * @Last Modified time: 2021-10-20 00:32:30
  */
 
 
@@ -45,6 +45,10 @@ Mp4Parse::~Mp4Parse() {
         fmp4_reader_destroy(reader_);
 }
 
+void Mp4Parse::SetSink(BaseSink* sink) {
+    sink_ = sink;
+}
+
 int Mp4Parse::Parse(io_buffer* buf, bool is_header) {
     if (!has_header_ && !is_header)
         return -1;
@@ -68,7 +72,11 @@ void Mp4Parse::MovAudioInfo(void* param, uint32_t track, uint8_t object, int cha
     th->audio_info_->bit_per_sample = bit_per_sample;
     th->audio_info_->sample_rate = sample_rate;
     th->audio_info_->track = track;
-    th->WriteTrackData(extra, bytes, MOV_TRACK_AUDIO);
+    if (th->sink_) {
+        th->sink_->UpdateInfo(th->video_info_, th->audio_info_);
+        th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_AUDIO);
+    }
+    
 }
 
 void Mp4Parse::MovVideoInfo(void* param, uint32_t track, uint8_t object, int width, int height, const void* extra, size_t bytes) {
@@ -78,10 +86,15 @@ void Mp4Parse::MovVideoInfo(void* param, uint32_t track, uint8_t object, int wid
     th->video_info_->width = width;
     th->video_info_->height = height;
     th->video_info_->track = track;
-    th->WriteTrackData(extra, bytes, MOV_TRACK_VIDEO);
+    if (th->sink_) {
+        th->sink_->UpdateInfo(th->video_info_, th->audio_info_);
+        th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_VIDEO);
+    }
 }
 
 void Mp4Parse::MovOnRead(void* param, uint32_t track, const void* buffer, size_t bytes, int64_t pts, int64_t dts, int flags) {
     Mp4Parse* th = (Mp4Parse*)param;
-    th->WriteData(track, buffer, bytes, pts, dts, flags);
+    if (th->sink_) {
+        th->sink_->WriteData(track, buffer, bytes, pts, dts, flags);
+    }
 }
