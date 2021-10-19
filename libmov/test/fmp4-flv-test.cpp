@@ -15,6 +15,14 @@
 
 extern "C" const struct mov_buffer_t* mov_file_buffer(void);
 
+struct mov_buffer_t buffer_reader =
+{
+    io_buffer_read,
+    NULL,
+    io_buffer_seek,
+    io_buffer_tell,
+};
+
 static uint8_t s_packet[2 * 1024 * 1024];
 static uint8_t s_buffer[4 * 1024 * 1024];
 static uint32_t s_aac_track;

@@ -2,7 +2,7 @@
  * @Author: kay1ess 
  * @Date: 2021-10-18 23:20:03 
  * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 21:22:56
+ * @Last Modified time: 2021-10-19 22:12:45
  */
 
 #ifndef _io_buffer_h_
@@ -234,28 +234,20 @@ private:
 };
 
 
-static int io_buffer_read(void *param, void *data, uint64_t bytes)
+static inline int io_buffer_read(void *param, void *data, uint64_t bytes)
 {
     return ((io_buffer*)param)->read((uint8_t*)data, (size_t)bytes);
 }
 
-static int io_buffer_seek(void *param, int64_t offset)
+static inline int io_buffer_seek(void *param, int64_t offset)
 {
     return ((io_buffer *)param)->seekr(offset);
 }
 
-static int64_t io_buffer_tell(void *param)
+static inline int64_t io_buffer_tell(void *param)
 {
     return ((io_buffer *)param)->tellr();
 }
-
-static struct mov_buffer_t buffer_reader =
-{
-    io_buffer_read,
-    NULL,
-    io_buffer_seek,
-    io_buffer_tell,
-};
 
 
 #ifdef __cplusplus

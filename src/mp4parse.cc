@@ -2,7 +2,7 @@
  * @Author: kay 
  * @Date: 2021-10-19 17:11:22 
  * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 21:21:07
+ * @Last Modified time: 2021-10-19 22:12:04
  */
 
 
@@ -12,6 +12,14 @@
 #include <functional>
 
 using namespace std::placeholders;
+
+struct mov_buffer_t buffer_reader =
+{
+    io_buffer_read,
+    NULL,
+    io_buffer_seek,
+    io_buffer_tell,
+};
 
 Mp4Parse::Mp4Parse() : has_header_(false) {
 
