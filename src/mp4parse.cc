@@ -2,7 +2,7 @@
  * @Author: kay 
  * @Date: 2021-10-19 17:11:22 
  * @Last Modified by: kay1ess
- * @Last Modified time: 2021-10-20 00:32:30
+ * @Last Modified time: 2021-10-20 00:39:59
  */
 
 
@@ -28,17 +28,13 @@ Mp4Parse::Mp4Parse() : has_header_(false) {
     info->onvideo = Mp4Parse::MovVideoInfo;
     info->onsubtitle = NULL;
 
-    video_info_ = (video_info_t*)malloc(sizeof(video_info_t));
-    audio_info_ = (audio_info_t*)malloc(sizeof(audio_info_t));
+    video_info_ = std::make_shared<video_info_t>();
+    audio_info_ = std::make_shared<audio_info_t>();
 
     memset(frame_, 0, sizeof(frame_));
 }
 
 Mp4Parse::~Mp4Parse() {
-    if (video_info_)
-        free(video_info_);
-    if (audio_info_)
-        free(audio_info_);
     if (info)
         free(info);
     if (reader_)

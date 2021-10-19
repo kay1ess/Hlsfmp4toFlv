@@ -2,13 +2,14 @@
  * @Author: kay 
  * @Date: 2021-10-19 11:37:13 
  * @Last Modified by: kay1ess
- * @Last Modified time: 2021-10-20 00:23:23
+ * @Last Modified time: 2021-10-20 00:38:56
  */
 
 #ifndef MP4PARSE_H
 #define MP4PARSE_H
 
 #include <stdio.h>
+#include <memory>
 #include "fmp4-reader.h"
 #include "io-buffer.h"
 #include "logging.hpp"
@@ -27,8 +28,8 @@ private:
     const char* flv_path_;
     bool has_header_;
     char frame_[1024*1024*1];
-    video_info_t* video_info_;
-    audio_info_t* audio_info_;
+    std::shared_ptr<video_info_t> video_info_;
+    std::shared_ptr<audio_info_t> audio_info_;
     struct mov_reader_trackinfo_t* info;
     BaseSink *sink_;
 

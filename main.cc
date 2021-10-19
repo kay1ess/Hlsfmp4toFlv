@@ -1,8 +1,8 @@
 /*
  * @Author: kay1ess
  * @Date: 2021-09-28 21:07:36 
- * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 21:53:51
+ * @Last Modified by: kay1ess
+ * @Last Modified time: 2021-10-20 01:26:39
  */
 
 
@@ -11,6 +11,7 @@
 #include "logging.hpp"
 #include "playlist.h"
 #include "mp4parse.h"
+#include "sink.h"
 
 
 int main() {
@@ -19,8 +20,10 @@ int main() {
     m.Fetch();
     m.Parse();
 
+    FlvFileSink sink("test.flv");
     io_buffer *buf = new io_buffer(1024);
     Mp4Parse parse;
+    parse.SetSink(&sink);
 
     for (auto & it : m.m4s_list()) {
         log_info("name:%s duration:%.2f is_header:%d url:%s", it->name.c_str(), it->duration, it->is_header, it->url.c_str());
