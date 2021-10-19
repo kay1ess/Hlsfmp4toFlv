@@ -11,6 +11,7 @@ include_directories("./cpr/include")
 
 aux_source_directory(src src)
 include_directories(src)
+include_directories(${CMAKE_SOURCE_DIR}/libmov/include)
 
 add_executable(hls2flv main.cc ${src})
-target_link_libraries(hls2flv PRIVATE cpr)
+target_link_libraries(hls2flv PRIVATE cpr mov)
