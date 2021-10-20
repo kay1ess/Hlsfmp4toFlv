@@ -1,8 +1,8 @@
 /*
  * @Author: kay1ess 
  * @Date: 2021-10-20 00:08:40 
- * @Last Modified by: kay1ess
- * @Last Modified time: 2021-10-20 01:27:47
+ * @Last Modified by: kay
+ * @Last Modified time: 2021-10-20 16:05:23
  */
 
 #ifndef SINK_H
@@ -11,6 +11,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <memory>
+#include <string>
 #include "logging.hpp"
 #include "flv-header.h"
 #include "flv-muxer.h"
@@ -53,7 +54,7 @@ protected:
 
 class FlvFileSink : public BaseSink {
 public:
-    FlvFileSink(const char* path);
+    FlvFileSink(std::string path);
     ~FlvFileSink();
     int WriteTrackData(const void* buffer, size_t bytes, track_type track) override;
     int WriteData(uint32_t track, const void* buffer, size_t bytes, int64_t pts, int64_t dts, int flags) override;

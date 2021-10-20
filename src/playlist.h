@@ -2,7 +2,7 @@
  * @Author: kay 
  * @Date: 2021-09-29 16:17:08 
  * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 20:49:00
+ * @Last Modified time: 2021-10-20 17:22:57
  */
 
 
@@ -14,7 +14,7 @@
 #include <memory>
 #include "logging.hpp"
 #include "code.hpp"
-
+#include "utils.h"
 
 typedef struct m4s {
     std::string name;
@@ -28,7 +28,7 @@ typedef struct m4s {
 class Playlist {
 public:
     Playlist(std::string& url): url_(url), is_vod_(false), is_end_(false), version_(-1), target_duration_(0.0) {
-        if (url_.find_first_of("http://") == 0 || url_.find_first_of("https://") == 0)
+        if (StartsWith(url_, "http://") || StartsWith(url_, "https://"))
             local_path_ = false;
         else
             local_path_ = true;

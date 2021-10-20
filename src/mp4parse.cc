@@ -1,8 +1,8 @@
 /*
  * @Author: kay 
  * @Date: 2021-10-19 17:11:22 
- * @Last Modified by: kay1ess
- * @Last Modified time: 2021-10-20 00:39:59
+ * @Last Modified by: kay
+ * @Last Modified time: 2021-10-20 12:47:04
  */
 
 
@@ -53,6 +53,13 @@ int Mp4Parse::Parse(io_buffer* buf, bool is_header) {
     }
     if (is_header) {
         has_header_ = true;
+        if (reader_)
+            fmp4_reader_destroy(reader_);
+        else
+            return -1;
+        reader_ = fmp4_reader_create(&buffer_reader, buf);
+        if (reader_ == NULL)
+            return -1;
         fmp4_read_init_segment(reader_, info, this, buf->can_read());
     } else {
         fmp4_read_normal_segment(reader_, frame_, sizeof(frame_), Mp4Parse::MovOnRead, this, buf->can_read());

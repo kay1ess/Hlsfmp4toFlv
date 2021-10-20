@@ -2,7 +2,7 @@
  * @Author: kay 
  * @Date: 2021-09-29 16:17:16 
  * @Last Modified by: kay
- * @Last Modified time: 2021-10-19 21:52:22
+ * @Last Modified time: 2021-10-20 17:44:49
  */
 
 
@@ -27,12 +27,13 @@ int Playlist::Fetch() {
         log_info("fetch %s ok", url_.c_str());
         raw_m3u8_ = res.text;
     } else {
-
+        log_warn("not support local path");
+        return -1;
     }
 
     // http://ip:port/live/index.m3u8
     auto index = url_.find_last_of('/');
-    base_url_ = std::string(url_, index + 1, url_.size());
+    base_url_ = std::string(url_, 0, index + 1);
 
     return 0;
 }
@@ -67,7 +68,8 @@ int Playlist::Parse() {
         s = p + 1;
 
         if (next_need_m4s) {
-            if (tmp.find_first_of("http://") == 0 || tmp.find_first_of("https://")) {
+            std::string m4s_name(tmp);
+            if (StartsWith(m4s_name, "http://") || StartsWith(m4s_name, "https://")) {
                 auto index = tmp.find_last_of('/');
                 m4s_list_.push_back(std::make_shared<m4s_t>(std::string(tmp, index + 1, tmp.size()), next_m4s_duration, false, std::string(tmp)));
             } else {
@@ -105,25 +107,20 @@ int Playlist::Parse() {
             continue;
         }
         if (strncmp("#EXT-X-MAP:URI=", tmp.data(), 15) == 0) {
-            discount = false;
             std::string t(tmp.data(), 16, p - s - 16);
             std::string name, url;
-            if (t.find_first_of("https://") == 0 || t.find_first_of("https://") == 0) {
+            if (StartsWith(t, "http://") || StartsWith(t, "https://")) {
                 auto index = t.find_last_of('/');
                 name = std::string(t, index + 1, t.size() - index - 2);
                 url = std::string(t, 0, index + 1);    // include last '/'
             } else {
                 name = std::string(t, 0, t.size() - 1);
+                url = base_url_;
             }
-            if (discount) {
-                log_info("header file will update");
-                last_header_ = std::make_shared<m4s_t>(name, 0, true, url + name);
-                discount = false;
-            } else {
-                cur_header_ = std::make_shared<m4s_t>(name, 0, true, url + name);
-                log_info("found header file, url=%s name=%s", cur_header_->url.c_str(), cur_header_->name.c_str());
-                m4s_list_.push_back(cur_header_);
-            }
+
+            cur_header_ = std::make_shared<m4s_t>(name, 0, true, url + name);
+            log_info("found header file, url=%s name=%s", cur_header_->url.c_str(), cur_header_->name.c_str());
+            m4s_list_.push_back(cur_header_);
             continue;
         }
         if (strncmp("#EXT-X-PLAYLIST-TYPE:", tmp.data(), 21) == 0) {
