@@ -89,6 +89,11 @@ int main(int argc, char** argv) {
             fail_count = 0;
         }
 
+        // when playlist end, it's not need to update
+        if (m.is_end() || m.is_vod()) {
+            break;
+        }
+
         if (m.m4s_list()[m.m4s_list().size()-1]->url == last_m4s_url && ++fail_count == 10) {
             log_error("playlist fail_count=%d not update", fail_count);
             break;
