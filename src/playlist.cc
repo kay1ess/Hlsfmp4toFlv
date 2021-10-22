@@ -30,17 +30,22 @@ int Playlist::Fetch() {
         log_warn("not support local path");
         return -1;
     }
-
-    // http://ip:port/live/index.m3u8
-    auto index = url_.find_last_of('/');
-    base_url_ = std::string(url_, 0, index + 1);
-
     return 0;
 }
 
 
 int Playlist::Update() {
-    return 0;
+    if (is_end_ && !is_vod_) {
+        log_info("playlist end~");
+        return -1;
+    }
+    else if (is_vod_) {
+        return -1;
+    }
+    if (Fetch() != 0) {
+        return -1;
+    }
+    return Parse();
 }
 
 
@@ -50,8 +55,9 @@ int Playlist::Parse() {
     size_t s = 0, p = 0;
     std::string_view tmp;
     bool next_need_m4s = false;
-    float next_m4s_duration = 0;
+    float next_m4s_duration = 0.0;
     bool discount =false;
+    std::vector<std::shared_ptr<m4s_t>> m4s_list;
 
     while (true) {
         p = raw_m3u8_.find_first_of('\n', s);
@@ -71,9 +77,9 @@ int Playlist::Parse() {
             std::string m4s_name(tmp);
             if (StartsWith(m4s_name, "http://") || StartsWith(m4s_name, "https://")) {
                 auto index = tmp.find_last_of('/');
-                m4s_list_.push_back(std::make_shared<m4s_t>(std::string(tmp, index + 1, tmp.size()), next_m4s_duration, false, std::string(tmp)));
+                m4s_list.push_back(std::make_shared<m4s_t>(std::string(tmp, index + 1, tmp.size()), next_m4s_duration, false, std::string(tmp)));
             } else {
-                m4s_list_.push_back(std::make_shared<m4s_t>(std::string(tmp), next_m4s_duration, false, base_url_ + std::string(tmp)));
+                m4s_list.push_back(std::make_shared<m4s_t>(std::string(tmp), next_m4s_duration, false, base_url_ + std::string(tmp)));
             }
             next_need_m4s = false;
             continue;
@@ -120,7 +126,7 @@ int Playlist::Parse() {
 
             cur_header_ = std::make_shared<m4s_t>(name, 0, true, url + name);
             log_info("found header file, url=%s name=%s", cur_header_->url.c_str(), cur_header_->name.c_str());
-            m4s_list_.push_back(cur_header_);
+            m4s_list.push_back(cur_header_);
             continue;
         }
         if (strncmp("#EXT-X-PLAYLIST-TYPE:", tmp.data(), 21) == 0) {
@@ -146,6 +152,11 @@ int Playlist::Parse() {
                 log_error("invalid #EXTINF:%s", t.c_str());
                 return -1;
             }
+            if (next_m4s_duration < min_duration_) {
+                min_duration_ = next_m4s_duration;
+            } else {
+                min_duration_ = target_duration_;
+            }
 
             next_need_m4s = true;
             continue;
@@ -158,6 +169,7 @@ int Playlist::Parse() {
         }
     }
     
+    m4s_list_.swap(m4s_list);
     return 0;
 }
 
@@ -175,6 +187,10 @@ bool Playlist::is_end() {
 
 float Playlist::target_duration() {
     return target_duration_;
+}
+
+float Playlist::min_duration() {
+    return min_duration_ >= target_duration_ ? target_duration_ : min_duration_;
 }
 
 std::shared_ptr<m4s_t> Playlist::last_header() {

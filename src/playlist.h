@@ -27,11 +27,15 @@ typedef struct m4s {
 
 class Playlist {
 public:
-    Playlist(std::string& url): url_(url), is_vod_(false), is_end_(false), version_(-1), target_duration_(0.0) {
+    Playlist(std::string& url): url_(url), is_vod_(false), is_end_(false), version_(-1), target_duration_(0.0), min_duration_(0.0) {
         if (StartsWith(url_, "http://") || StartsWith(url_, "https://"))
             local_path_ = false;
         else
             local_path_ = true;
+        // TODO: local index.m3u8 support local file
+        // http://ip:port/live/index.m3u8
+        auto index = url_.find_last_of('/');
+        base_url_ = std::string(url_, 0, index + 1);
     }
     ~Playlist();
     int Fetch();
@@ -41,6 +45,7 @@ public:
     bool is_vod();
     bool is_end();
     float target_duration();
+    float min_duration();
     std::shared_ptr<m4s_t> last_header();
     std::shared_ptr<m4s_t> current_header();
     std::vector<std::shared_ptr<m4s_t>> m4s_list();
@@ -51,6 +56,7 @@ private:
     bool is_vod_;
     bool is_end_;
     bool local_path_;
+    float min_duration_;
     std::string url_;
     std::string base_url_;
     std::vector<std::shared_ptr<m4s_t>> m4s_list_;

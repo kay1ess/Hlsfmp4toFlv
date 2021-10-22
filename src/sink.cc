@@ -25,6 +25,7 @@ FlvFileSink::FlvFileSink(std::string path) {
     if (writer_ == NULL) {
         log_error("create flv writer failed");
     }
+    first_video_dts_ = first_audio_dts_ = 0;
 }
 
 FlvFileSink::~FlvFileSink() {
@@ -84,7 +85,11 @@ int FlvFileSink::WriteData(uint32_t track, const void* buffer, size_t bytes, int
         int frame_type = 0;
         video_tag_.avpacket = FLV_AVPACKET;
         video_tag_.cts = (int32_t)(pts - dts);
-        log_info("[V] pts=%" PRId64 " dts=%" PRId64 "", pts, dts);
+        if (first_video_dts_ == 0) {
+            first_video_dts_ = dts;
+        }
+        dts = dts - first_video_dts_;
+        // log_info("[V] pts=%" PRId64 " dts=%" PRId64 "", pts, dts);
         assert(video_tag_.cts >= 0);
         int n = flv_video_tag_header_write(&video_tag_, packet_, sizeof(packet_));
         memcpy(packet_ + n, buffer, bytes);
@@ -93,8 +98,12 @@ int FlvFileSink::WriteData(uint32_t track, const void* buffer, size_t bytes, int
         audio_tag_.avpacket = FLV_AVPACKET;
         int n = flv_audio_tag_header_write(&audio_tag_, packet_, sizeof(packet_));
         memcpy(packet_ + n, buffer, bytes);
+        if (first_audio_dts_ == 0) {
+            first_audio_dts_ = dts;
+        }
+        dts = dts - first_audio_dts_;
         flv_writer_input(writer_, FLV_TYPE_AUDIO, packet_, bytes + n, (uint32_t)dts);
-        log_info("[A] dts=%" PRId64 "", dts);
+        // log_info("[A] dts=%" PRId64 "", dts);
     } else {
         assert(0);
     }

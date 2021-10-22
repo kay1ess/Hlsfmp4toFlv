@@ -63,6 +63,8 @@ private:
     uint8_t packet_[1*1024*1024];
     struct flv_video_tag_header_t video_tag_;
     struct flv_audio_tag_header_t audio_tag_;
+    int64_t first_video_dts_;
+    int64_t first_audio_dts_;
 };
 
 #endif
