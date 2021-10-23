@@ -77,7 +77,8 @@ void Mp4Parse::MovAudioInfo(void* param, uint32_t track, uint8_t object, int cha
     th->audio_info_->track = track;
     if (th->sink_) {
         th->sink_->UpdateInfo(th->video_info_, th->audio_info_);
-        th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_AUDIO);
+        int ret = th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_AUDIO);
+        assert(ret == 0);
     }
     
 }
@@ -91,7 +92,8 @@ void Mp4Parse::MovVideoInfo(void* param, uint32_t track, uint8_t object, int wid
     th->video_info_->track = track;
     if (th->sink_) {
         th->sink_->UpdateInfo(th->video_info_, th->audio_info_);
-        th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_VIDEO);
+        int ret = th->sink_->WriteTrackData(extra, bytes, MOV_TRACK_VIDEO);
+        assert(ret == 0);
     }
 }
 

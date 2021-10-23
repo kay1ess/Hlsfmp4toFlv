@@ -76,20 +76,39 @@ int main(int argc, char** argv) {
         }
 
         for (; it != m4s_list.end(); it++) {
-            cpr::Response r = cpr::Get(cpr::Url{(*it)->url});
-            log_info("download from url=%s", (*it)->url.c_str());
-            if (r.status_code == 200) {
-                buf->write((const uint8_t*)r.text.data(), r.text.size());
-                int ret = parse.Parse(buf, (*it)->is_header);
-                assert(ret == 0);
+            if (m.is_local()) {
+                char data[1024*10];
+                FILE *fp = fopen((*it)->url.c_str(), "rb");
+                if (fp == NULL) {
+                    log_error("open file=%s failed", (*it)->url.c_str());
+                    break;
+                } else {
+                    while (!feof(fp))
+                    {
+                        size_t size = fread(data, 1, sizeof(data), fp);
+                        buf->write((uint8_t*)data, size);
+                        log_info("load data from url=%s size=%zd", (*it)->url.c_str(), size);
+                    }
+                    fclose(fp);
+                    int ret = parse.Parse(buf, (*it)->is_header);
+                    assert(ret == 0);
+                }
             } else {
-                log_error("url: %s download failed status=%ld", (*it)->url.c_str(), r.status_code);
-                break;
+                cpr::Response r = cpr::Get(cpr::Url{(*it)->url});
+                log_info("download from url=%s", (*it)->url.c_str());
+                if (r.status_code == 200) {
+                    buf->write((const uint8_t*)r.text.data(), r.text.size());
+                    int ret = parse.Parse(buf, (*it)->is_header);
+                    assert(ret == 0);
+                } else {
+                    log_error("url: %s download failed status=%ld", (*it)->url.c_str(), r.status_code);
+                    break;
+                }
             }
             fail_count = 0;
         }
 
-        // when playlist end, it's not need to update
+        // need not to update when playlist end
         if (m.is_end() || m.is_vod()) {
             break;
         }

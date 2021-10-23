@@ -14,6 +14,8 @@
 
 Playlist::~Playlist() {
     m4s_list_.clear();
+    if (local_path_ && fp_)
+        fclose(fp_);
 }
 
 
@@ -27,8 +29,17 @@ int Playlist::Fetch() {
         log_info("fetch %s ok", url_.c_str());
         raw_m3u8_ = res.text;
     } else {
-        log_warn("not support local path");
-        return -1;
+        if (fp_ == NULL) {
+            log_error("file:%s open failed", url_.c_str());
+            return -1;
+        }
+        u_char data[1024];
+        raw_m3u8_.clear();
+        while (!feof(fp_)) {
+            size_t size = fread(data, 1, sizeof(data), fp_);
+            raw_m3u8_ += std::string((const char*)data, size);
+        }
+        return 0;
     }
     return 0;
 }
@@ -183,6 +194,10 @@ bool Playlist::is_vod() {
 
 bool Playlist::is_end() {
     return is_end_ || is_vod_;
+}
+
+bool Playlist::is_local() {
+    return local_path_;
 }
 
 float Playlist::target_duration() {
